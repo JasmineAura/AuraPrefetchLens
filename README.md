@@ -16,7 +16,7 @@ Windows `$MFT` 离线分析 · 原始字节追溯 · 驻留文件提取
 
 </div>
 
-![AURA MFT LENS 主界面](docs/images/workspace.png)
+![AURA MFT LENS 项目封面](docs/images/cover.png)
 
 ## 项目简介
 
@@ -24,7 +24,54 @@ AuraPrefetchLens 当前聚焦 **Windows NTFS 主文件表 `$MFT`** 的离线调�
 
 使用 Tauri 2、Rust 与 React 构建，采用斜切几何、大字排版和持续环境动效。主界面分为左右两段：左侧选择证据并解析，右侧在完成后展开操作。记录结果在独立窗口展示，分类通过窗口内的标签切换。
 
-提供 **曜石紫、午夜蓝、绯红黑** 三套主题，支持窗口间同步。动效可以关闭，并遵循系统的“减少动态效果”设置；界面不使用游戏素材。
+提供 **曜石紫、午夜蓝、绯红黑** 三套深色主题和 **瓷白紫** 亮色主题，支持窗口间同步。点击右上角太阳 / 月亮按钮即可在亮色和上次使用的深色主题之间切换，选择会自动保存。动效可以关闭，并遵循系统的“减少动态效果”设置；界面不使用游戏素材。
+
+## 界面预览
+
+以下功能截图来自程序实际解析的演示用 MFT，不包含真实用户文件数据。点击图片可以查看大图。
+
+### 双段主界面
+
+左侧导入证据，右侧在解析完成后展开记录统计与操作入口。
+
+![解析完成后的主界面](docs/images/workspace-ready.png)
+
+### 独立分析窗口
+
+六个分类标签、分页搜索与证据摘要集中在独立窗口中。
+
+![独立记录分析窗口](docs/images/records.png)
+
+### 记录调查与驻留提取
+
+| SI / FN 时间与记录详情 | 驻留内容预览与提取 |
+| --- | --- |
+| ![记录调查卡片](docs/images/record-detail.png) | ![驻留数据流提取](docs/images/resident-extraction.png) |
+
+### 原始字节追溯
+
+点击属性即可高亮其对应字节，并在输入原始字节与 fixup 还原视图之间切换。
+
+<p align="center"><img src="docs/images/raw-evidence.png" alt="属性字节高亮" width="790" /></p>
+
+### 深浅主题，随时切换
+
+| 曜石紫 | 午夜蓝 |
+| --- | --- |
+| ![曜石紫主题](docs/images/theme-violet.png) | ![午夜蓝主题](docs/images/theme-blue.png) |
+| **绯红黑** | **瓷白紫 · 亮色** |
+| ![绯红黑主题](docs/images/theme-red.png) | ![瓷白紫亮色主题](docs/images/theme-light.png) |
+
+亮色主题同时适配主界面、结果列表、详情、十六进制视图和设置面板。
+
+![亮色主题的分析窗口](docs/images/records-light.png)
+
+<details>
+<summary>查看外观与动效设置</summary>
+
+![外观与动效设置](docs/images/appearance.png)
+
+</details>
 
 ## 下载与使用
 
@@ -32,8 +79,8 @@ AuraPrefetchLens 当前聚焦 **Windows NTFS 主文件表 `$MFT`** 的离线调�
 
 | 文件 | 用途 |
 | --- | --- |
-| `Aura-MFT-Lens-v0.1.0-windows-x64.exe` | 直接运行的 Windows x64 程序 |
-| `Aura-MFT-Lens-v0.1.0-windows-x64.zip` | 便携包，包含程序与使用说明 |
+| `Aura-MFT-Lens-v0.1.1-windows-x64.exe` | 直接运行的 Windows x64 程序 |
+| `Aura-MFT-Lens-v0.1.1-windows-x64.zip` | 便携包，包含程序与使用说明 |
 | `SHA256SUMS.txt` | 发行文件的 SHA-256 校验值 |
 
 运行环境：**Windows 10 / 11 x64**，需要 [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)。发行包不内置 WebView2；如果电脑缺少该运行时，请先安装。
@@ -63,7 +110,7 @@ AuraPrefetchLens 当前聚焦 **Windows NTFS 主文件表 `$MFT`** 的离线调�
 | 驻留提取 | 文本预览、精确字节导出、提取结果 SHA-256 |
 | 证据校验 | 输入 SHA-256、空槽、无效记录及扩展记录计数 |
 | 双窗口 | 独立分析窗口、重新打开、分类跳转、更换证据后同步刷新 |
-| 外观 | 三套主题、窗口间同步、可关闭的持续环境动效 |
+| 外观 | 三套深色 + 一套亮色、快捷切换、自动记忆、窗口间同步、可关闭动效 |
 
 ### 驻留文件提取
 
@@ -113,7 +160,7 @@ npm run tauri dev
 powershell -File .\scripts\build-release.ps1
 ```
 
-产物位于 `artifacts/release/v0.1.0/`。也可以仅编译程序：
+产物位于 `artifacts/release/v0.1.1/`。也可以仅编译程序：
 
 ```powershell
 npx tauri build --no-bundle

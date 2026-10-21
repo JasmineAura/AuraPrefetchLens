@@ -12,6 +12,7 @@ test("split workspace, themes and desktop notice", async ({ page }) => {
   for (const [name, id] of [
     ["午夜蓝", "blue"],
     ["绯红黑", "red"],
+    ["瓷白紫", "light"],
     ["曜石紫", "violet"],
   ]) {
     await page.getByRole("button", { name: new RegExp(name) }).click();
@@ -31,6 +32,25 @@ test("split workspace, themes and desktop notice", async ({ page }) => {
     fullPage: true,
   });
   expect(errors).toEqual([]);
+});
+test("light theme persists, restores dark choice and syncs windows", async ({page,context}) => {
+  await page.goto('/');
+  await page.getByRole('button',{name:'外观与动效'}).click();
+  await page.getByRole('button',{name:/午夜蓝/}).click();
+  await page.getByRole('button',{name:'关闭设置'}).click();
+  await page.getByRole('button',{name:'切换亮色主题'}).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme','light');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme','light');
+  const other=await context.newPage();await other.goto('/?view=results');
+  await expect(other.locator('html')).toHaveAttribute('data-theme','light');
+  await page.getByRole('button',{name:'切换深色主题'}).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme','blue');
+  await expect(other.locator('html')).toHaveAttribute('data-theme','blue');
+  await other.getByRole('button',{name:'切换亮色主题'}).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme','light');
+  await page.screenshot({path:'artifacts/light-workspace.png',fullPage:true});
+  await other.screenshot({path:'artifacts/light-results.png',fullPage:true});
 });
 test("minimum window has no horizontal overflow", async ({ page }) => {
   await page.setViewportSize({ width: 1100, height: 740 });

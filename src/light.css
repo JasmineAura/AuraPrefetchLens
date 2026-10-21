@@ -1,0 +1,52 @@
+:root { color-scheme: dark; }
+.theme-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.theme-swatch { height: 55px; }
+.theme-list button { display: block; }
+:root[data-theme="light"] {
+  color-scheme: light;
+  color: #292332;
+  background: #f4f2f8;
+  --accent: #7044b0;
+  --accent-rgb: 112, 68, 176;
+  --bright: #542b8c;
+  --dim: #716779;
+  --surface: #ffffff;
+  --line: #33204f16;
+  --bg: #f4f2f8;
+  --side: #ece8f2;
+}
+:root[data-theme="light"] .ambient { opacity: .65; }
+:root[data-theme="light"] .ambient:after {
+  background-image: linear-gradient(#44305c04 1px,transparent 1px),linear-gradient(90deg,#44305c04 1px,transparent 1px);
+}
+:root[data-theme="light"] :is(h1,.landing-title>p strong,.operation-content h2,.operation-stats strong,.case-name strong,.evidence-info strong,.file-cell strong,.detail-title h2,.stream-heading strong,.settings-modal h2,.motion-setting strong) { color:#30253e; }
+:root[data-theme="light"] :is(h1>span,.operation-stats>div:last-child strong,.results-total strong,.resident-label,.ready-indicator,.hex-row .highlight) { color:var(--accent); }
+:root[data-theme="light"] :is(.brand>div:last-child,.theme-list strong) { color:#382c45; }
+:root[data-theme="light"] :is(.landing-title>p,.waiting-copy h2,.detail-section-title,.attribute-row strong,.info strong,.fn-card strong) { color:#5c456f; }
+:root[data-theme="light"] :is(.header-context,.stage-index>span:last-child,.stage-bottom,.source-footnote,.case-facts,.case-fingerprint,.waiting-copy p,.waiting-copy>span,.source-form>label span,.case-name span,.operation-content h2>span,.operation-stats span,.brand span:last-child,.local-badge,.icon-button,.sculpture-coordinate,.results-heading .micro,.results-total span,.evidence-info>span,.evidence-meta span,.panel-count small,.search,.filter-tabs button,.filter-tabs button span,.pagination,.parse-notes,footer,.detail-title p,.info span,.hint,.preview-label,.theme-list small,.motion-setting p,.detail-tabs button,.hex-toolbar button,.hash-code,.stream-meta,.nonresident-note) { color:#71617f; }
+:root[data-theme="light"] :is(.source-form>label,.evidence-meta b,.time-row code,.hex-row code,.stream-preview,.search input,.path-picker input,.date-cell) { color:#594567; }
+:root[data-theme="light"] .primary-button { color:#fff; }
+:root[data-theme="light"] .primary-button:hover:not(:disabled) { color:#fff; background:#5d329c; }
+:root[data-theme="light"] .view-results { color:var(--accent); }
+:root[data-theme="light"] .view-results:hover:not(:disabled) { background:rgba(var(--accent-rgb),.14); color:var(--bright); }
+:root[data-theme="light"] :is(.path-picker,.search,.evidence-bar,.records-panel,.stream-card,.fn-card,.time-table,.hex-view,.detail-grid,.theme-list button) { background:#ffffffb8; border-color:var(--line); }
+:root[data-theme="light"] .results-main .records-panel { background:#ffffffb8; }
+:root[data-theme="light"] :is(td,.time-row,.attribute-row) { border-bottom-color:var(--line); }
+:root[data-theme="light"] :is(.fn-card>div:first-child,.time-head) { background:#ede7f555; }
+:root[data-theme="light"] .status-pill { color:#74617f; border-color:#73538825; }
+:root[data-theme="light"] .status-pill.allocated { color:#2e7055; background:#2e70550b; border-color:#2e705529; }
+:root[data-theme="light"] .status-pill.free { color:#785c7b; background:#785c7b09; }
+:root[data-theme="light"] .time-row.diff code { color:#865e1e; }
+:root[data-theme="light"] .warning-box { color:#805c24; border-color:#a27a3a30; }
+:root[data-theme="light"] .detail-drawer { box-shadow:-20px 0 90px #26143b20; }
+:root[data-theme="light"] :is(.drawer-backdrop,.modal-backdrop) { background:#29203c44; }
+:root[data-theme="light"] .stream-preview { background:#f1edf7; }
+:root[data-theme="light"] .hex-ascii { color:#776480; }
+:root[data-theme="light"] .hex-row .highlight { background:#7044b022; }
+:root[data-theme="light"] .theme-list button.selected { border-color:var(--accent); background:#7044b008; }
+:root[data-theme="light"] .toast { background:#fff; color:#573886; box-shadow:0 10px 40px #35204c20; }
+:root[data-theme="light"] .toast.error { color:#9b3748; }
+:root[data-theme="light"] .settings-modal { background:#faf8fd; box-shadow:0 30px 120px #36204730; }
+:root[data-theme="light"] .toggle { background:#36204718; }
+:root[data-theme="light"] .toggle.on { background:#7044b033; }
+:root[data-theme="light"] ::selection { background:#7044b0; color:#fff; }

@@ -26,12 +26,15 @@ import {
   X,
   AlertTriangle,
   Settings2,
+  Sun,
+  Moon,
   Copy,
   ExternalLink,
 } from "lucide-react";
 import type { Attribute, Detail, Entry, Summary, Times } from "./types";
 import "./style.css";
 import "./workspace.css";
+import "./light.css";
 
 const num = (n: number) => n.toLocaleString("en-US");
 const size = (n: number) =>
@@ -59,11 +62,13 @@ const themes = [
   { id: "violet", name: "OBSIDIAN", label: "曜石紫", color: "#ac88ef" },
   { id: "blue", name: "MIDNIGHT", label: "午夜蓝", color: "#69b6e4" },
   { id: "red", name: "CARMINE", label: "绯红黑", color: "#d47a88" },
+  { id: "light", name: "PORCELAIN", label: "瓷白紫", color: "#7044b0" },
 ];
 const resultsMode =
   new URLSearchParams(location.search).get("view") === "results";
 function App() {
   const [sourcePath, setSourcePath] = useState("");
+  const lastDarkTheme = useRef(localStorage.getItem("aura-dark-theme") || "violet");
   const [theme, setTheme] = useState(
     () => localStorage.getItem("aura-theme") || "violet",
   );
@@ -97,6 +102,10 @@ function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("aura-theme", theme);
+    if (theme !== "light") {
+      lastDarkTheme.current = theme;
+      localStorage.setItem("aura-dark-theme", theme);
+    }
   }, [theme]);
   useEffect(() => {
     document.documentElement.dataset.motion = motion ? "on" : "off";
@@ -358,6 +367,14 @@ function App() {
           </span>
           <button
             className="icon-button"
+            aria-label={theme === "light" ? "切换深色主题" : "切换亮色主题"}
+            title={theme === "light" ? "切换深色主题" : "切换亮色主题"}
+            onClick={() => setTheme(theme === "light" ? lastDarkTheme.current : "light")}
+          >
+            {theme === "light" ? <Moon size={17} /> : <Sun size={17} />}
+          </button>
+          <button
+            className="icon-button"
             title={motion ? "暂停动效" : "启用动效"}
             onClick={() => setMotion(!motion)}
           >
@@ -572,7 +589,7 @@ function App() {
             )}
             <div className="stage-bottom">
               <span>RAW DATA. REAL EVIDENCE.</span>
-              <span>AURA / 01.00</span>
+              <span>AURA / 01.01</span>
             </div>
           </section>
         </main>
@@ -808,7 +825,7 @@ function App() {
             <span>
               <span className="live-dot" />
               {isTauri() ? "DESKTOP ENGINE READY" : "INTERFACE PREVIEW"}{" "}
-              <b>01.00</b>
+              <b>01.01</b>
             </span>
           </footer>
         </main>
@@ -1214,7 +1231,7 @@ function App() {
                   <span
                     className="theme-swatch"
                     style={{
-                      background: `linear-gradient(135deg,#100f16 48%,${t.color} 49%,${t.color} 60%,#211c29 61%)`,
+                      background: `linear-gradient(135deg,${t.id === "light" ? "#f5f2fa" : "#100f16"} 48%,${t.color} 49%,${t.color} 60%,${t.id === "light" ? "#e2d9ef" : "#211c29"} 61%)`,
                     }}
                   />
                   <strong>

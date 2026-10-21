@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#100d18"/>
+  <path d="M52 86h1096M52 558h1096M762 126v388" stroke="#ac88ef" stroke-opacity=".15"/>
+  <g font-family="Segoe UI,Arial,sans-serif" fill="#ac88ef">
+    <text x="54" y="57" font-size="20" font-weight="700" letter-spacing="7" fill="#e7e1ed">AURA</text>
+    <text x="198" y="54" font-size="9" letter-spacing="3" fill="#84728f">FORENSIC SYSTEMS</text>
+    <text x="1145" y="54" text-anchor="end" font-size="9" letter-spacing="3" fill="#84728f">NTFS / INVESTIGATION WORKSPACE</text>
+    <path d="M60 187h18" stroke="#ac88ef" stroke-width="2"/>
+    <text x="91" y="190" font-size="9" letter-spacing="3" fill="#9f8caf">EVERY RECORD LEAVES A TRACE</text>
+    <g transform="translate(60 302) skewX(-9)"><text font-family="Arial Black,Segoe UI,sans-serif" font-size="88" font-weight="900" letter-spacing="-5" fill="#eeebf1">MFT<tspan dx="13" fill="#ac88ef">LENS</tspan></text></g>
+    <text x="63" y="369" font-family="Microsoft YaHei UI,Microsoft YaHei,sans-serif" font-size="24" font-weight="300" letter-spacing="3" fill="#c4b6d2">从一份证据，进入文件系统的深处。</text>
+    <text x="65" y="430" font-size="9" letter-spacing="2" fill="#8b769d">OFFLINE ANALYSIS / RESIDENT DATA / RAW EVIDENCE</text>
+    <text x="57" y="594" font-size="9" letter-spacing="2" fill="#81708e">AuraPrefetchLens</text>
+    <text x="1145" y="594" text-anchor="end" font-size="9" letter-spacing="2" fill="#81708e">RAW DATA. REAL EVIDENCE.</text>
+  </g>
+  <g transform="translate(950 316)" fill="none" stroke="#ac88ef">
+    <circle r="123" stroke-opacity=".12" stroke-dasharray="3 6"/>
+    <path d="M0-98 98 0 0 98-98 0Z" stroke-opacity=".35"/>
+    <path d="M0-140 140 0 0 140-140 0Z" stroke-opacity=".1"/>
+    <path d="m0-40 35 20v40L0 40-35 20v-40Z" stroke-opacity=".6"/>
+    <path d="M-8-8h16M-8 0h16M-8 8h16" stroke-opacity=".7"/>
+    <path d="M-146-92h8m-4-4v8M138 92h8m-4-4v8" stroke-opacity=".4"/>
+  </g>
+</svg>
