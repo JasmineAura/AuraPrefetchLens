@@ -1,0 +1,5 @@
+{
+  "identifier": "default",
+  "windows": ["main", "results"],
+  "permissions": ["core:default", "dialog:allow-open", "dialog:allow-save"]
+}

@@ -1,0 +1,82 @@
+export type Times = {
+  created: string;
+  modified: string;
+  changed: string;
+  accessed: string;
+  raw: string[];
+};
+export type Entry = {
+  id: number;
+  sequence: number;
+  name: string;
+  path: string;
+  pathStatus: string;
+  inUse: boolean;
+  directory: boolean;
+  extension: boolean;
+  baseId: number;
+  size: number;
+  resident: boolean;
+  streams: number;
+  modified: string;
+  warnings: string[];
+  timeDifference: boolean;
+};
+export type Summary = {
+  source: string;
+  sha256: string;
+  bytes: number;
+  recordSize: number;
+  slots: number;
+  parsed: number;
+  active: number;
+  free: number;
+  directories: number;
+  extensions: number;
+  resident: number;
+  ads: number;
+  differences: number;
+  invalid: number;
+  empty: number;
+  partial: number;
+};
+export type Attribute = {
+  kind: number;
+  label: string;
+  id: number;
+  name: string;
+  offset: number;
+  length: number;
+  resident: boolean;
+  size: number;
+  valueOffset: number;
+  flags: number;
+};
+export type Stream = {
+  id: number;
+  name: string;
+  resident: boolean;
+  size: number;
+  preview: string;
+  hex: string[];
+  sha256: string;
+  flags: number;
+};
+export type Detail = {
+  entry: Entry;
+  names: {
+    name: string;
+    parent: number;
+    parentSequence: number;
+    namespace: number;
+    times: Times;
+  }[];
+  si: Times;
+  attributes: Attribute[];
+  rawHex: string[];
+  fixedHex: string[];
+  offset: number;
+  usedSize: number;
+  recordSize: number;
+  streams: Stream[];
+};
