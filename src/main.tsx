@@ -35,6 +35,7 @@ import type { Attribute, Detail, Entry, Summary, Times } from "./types";
 import "./style.css";
 import "./workspace.css";
 import "./light.css";
+import { JournalHome, JournalResults, type JournalSummary } from "./journal";
 
 const num = (n: number) => n.toLocaleString("en-US");
 const size = (n: number) =>
@@ -66,9 +67,18 @@ const themes = [
 ];
 const resultsMode =
   new URLSearchParams(location.search).get("view") === "results";
+const usnMode = new URLSearchParams(location.search).get("view") === "usn";
 function App() {
   const [sourcePath, setSourcePath] = useState("");
-  const lastDarkTheme = useRef(localStorage.getItem("aura-dark-theme") || "violet");
+  const [artifact, setArtifact] = useState<"mft" | "usn">("mft");
+  const [journalPath, setJournalPath] = useState("");
+  const [journalSummary, setJournalSummary] = useState<JournalSummary | null>(
+    null,
+  );
+  const selectedPath = artifact === "usn" ? journalPath : sourcePath;
+  const lastDarkTheme = useRef(
+    localStorage.getItem("aura-dark-theme") || "violet",
+  );
   const [theme, setTheme] = useState(
     () => localStorage.getItem("aura-theme") || "violet",
   );
@@ -226,22 +236,60 @@ function App() {
     };
   }, []);
   useEffect(() => {
+    if (!isTauri()) return;
+    let disposed = false;
+    let off: (() => void) | undefined;
+    const accept = (s: JournalSummary) => {
+      setJournalSummary(s);
+      setJournalPath(s.source);
+    };
+    const setup = async () => {
+      const unlisten = await listen<JournalSummary>("journal-changed", (e) =>
+        accept(e.payload),
+      );
+      if (disposed) {
+        unlisten();
+        return;
+      }
+      off = unlisten;
+      try {
+        const s = await invoke<JournalSummary>("get_journal_summary");
+        if (!disposed) accept(s);
+      } catch {
+        /* No journal loaded yet. */
+      }
+    };
+    void setup().catch((e) => {
+      if (!disposed) setError(String(e));
+    });
+    return () => {
+      disposed = true;
+      off?.();
+    };
+  }, []);
+  useEffect(() => {
     if (!notice) return;
     const t = setTimeout(() => setNotice(""), 6500);
     return () => clearTimeout(t);
   }, [notice]);
   async function browse() {
     if (!isTauri()) {
-      setError("请在桌面端浏览并导入 MFT 文件。");
+      setError("请在桌面端浏览并导入证据文件。");
       return;
     }
     try {
       const path = await open({
         multiple: false,
         directory: false,
-        title: "选择原始 $MFT 文件",
+        title:
+          artifact === "usn"
+            ? "选择原始 $UsnJrnl:$J 数据流"
+            : "选择原始 $MFT 文件",
       });
-      if (typeof path === "string") setSourcePath(path);
+      if (typeof path === "string") {
+        if (artifact === "usn") setJournalPath(path);
+        else setSourcePath(path);
+      }
     } catch (e) {
       setError(String(e));
     }
@@ -255,20 +303,29 @@ function App() {
   }
   async function load() {
     if (!isTauri()) {
-      setError("请在桌面端导入并解析真实 MFT。");
+      setError("请在桌面端导入并解析真实证据。");
       return;
     }
-    if (!sourcePath.trim()) return;
+    if (!selectedPath.trim()) return;
     setBusy(true);
     setProgress(0);
     setError("");
     try {
-      const s = await invoke<Summary>("import_mft", {
-        path: sourcePath.trim(),
-      });
-      setSummary(s);
-      setNotice(`解析完成 · ${num(s.parsed)} 条有效记录`);
-      await showResults();
+      if (artifact === "usn") {
+        const s = await invoke<JournalSummary>("import_journal", {
+          path: selectedPath.trim(),
+        });
+        setJournalSummary(s);
+        setNotice(`解析完成 · ${num(s.records)} 条 USN 记录`);
+        await invoke("open_journal_results");
+      } else {
+        const s = await invoke<Summary>("import_mft", {
+          path: selectedPath.trim(),
+        });
+        setSummary(s);
+        setNotice(`解析完成 · ${num(s.parsed)} 条有效记录`);
+        await showResults();
+      }
     } catch (e) {
       setError(String(e));
     } finally {
@@ -323,6 +380,7 @@ function App() {
     }
   }
 
+  const activeSummary = artifact === "usn" ? journalSummary : summary;
   const counts: Record<string, number> = {
     all: summary?.parsed || 0,
     active: summary?.active || 0,
@@ -333,7 +391,7 @@ function App() {
   };
   return (
     <div
-      className={`app-shell ${resultsMode ? "results-mode" : "landing-mode"}`}
+      className={`app-shell ${resultsMode || usnMode ? "results-mode" : "landing-mode"}`}
     >
       <div className="ambient" aria-hidden="true">
         <div className="orb orb-one" />
@@ -344,7 +402,7 @@ function App() {
       <header className="app-header">
         <a
           className="brand"
-          href={resultsMode ? "?view=results" : "#"}
+          href={usnMode ? "?view=usn" : resultsMode ? "?view=results" : "#"}
           aria-label="Aura 首页"
         >
           <div className="brand-mark">
@@ -356,9 +414,11 @@ function App() {
           </div>
         </a>
         <div className="header-context">
-          {resultsMode
-            ? "EVIDENCE / ANALYSIS"
-            : "NTFS / INVESTIGATION WORKSPACE"}
+          {usnMode
+            ? "USN / CHANGE JOURNAL"
+            : resultsMode
+              ? "EVIDENCE / ANALYSIS"
+              : "NTFS / INVESTIGATION WORKSPACE"}
         </div>
         <div className="header-tools">
           <span className="local-badge">
@@ -369,7 +429,9 @@ function App() {
             className="icon-button"
             aria-label={theme === "light" ? "切换深色主题" : "切换亮色主题"}
             title={theme === "light" ? "切换深色主题" : "切换亮色主题"}
-            onClick={() => setTheme(theme === "light" ? lastDarkTheme.current : "light")}
+            onClick={() =>
+              setTheme(theme === "light" ? lastDarkTheme.current : "light")
+            }
           >
             {theme === "light" ? <Moon size={17} /> : <Sun size={17} />}
           </button>
@@ -389,7 +451,9 @@ function App() {
           </button>
         </div>
       </header>
-      {!resultsMode ? (
+      {usnMode ? (
+        <JournalResults />
+      ) : !resultsMode ? (
         <main className="landing-workspace">
           <section className="import-stage">
             <div className="stage-index">
@@ -401,7 +465,8 @@ function App() {
                 <span /> EVERY RECORD LEAVES A TRACE
               </div>
               <h1>
-                MFT<span>LENS</span>
+                {artifact === "usn" ? "USN" : "MFT"}
+                <span>LENS</span>
                 <sup>✦</sup>
               </h1>
               <p>
@@ -411,6 +476,24 @@ function App() {
               </p>
             </div>
             <div className="source-form">
+              <div className="source-kind" role="group" aria-label="证据类型">
+                <button
+                  className={artifact === "mft" ? "chosen" : ""}
+                  aria-pressed={artifact === "mft"}
+                  disabled={busy}
+                  onClick={() => setArtifact("mft")}
+                >
+                  $MFT / 文件记录
+                </button>
+                <button
+                  className={artifact === "usn" ? "chosen" : ""}
+                  aria-pressed={artifact === "usn"}
+                  disabled={busy}
+                  onClick={() => setArtifact("usn")}
+                >
+                  $J / USN Journal
+                </button>
+              </div>
               <label htmlFor="source-path">
                 证据路径 <span>EVIDENCE SOURCE</span>
               </label>
@@ -419,9 +502,17 @@ function App() {
                 <input
                   id="source-path"
                   aria-label="证据路径"
-                  value={sourcePath}
-                  onChange={(e) => setSourcePath(e.target.value)}
-                  placeholder="选择或粘贴 $MFT 文件路径"
+                  value={selectedPath}
+                  onChange={(e) =>
+                    artifact === "usn"
+                      ? setJournalPath(e.target.value)
+                      : setSourcePath(e.target.value)
+                  }
+                  placeholder={
+                    artifact === "usn"
+                      ? "选择或粘贴 $UsnJrnl:$J 数据流路径"
+                      : "选择或粘贴 $MFT 文件路径"
+                  }
                   disabled={busy}
                 />
                 <button
@@ -435,11 +526,15 @@ function App() {
               </div>
               <div className="source-footnote">
                 <ShieldCheck size={12} />
-                <span>原始 $MFT 文件 · 本地处理 · 保持源文件不变</span>
+                <span>
+                  {artifact === "usn"
+                    ? "原始 $J 数据流 · 变长记录 · 保持源文件不变"
+                    : "原始 $MFT 文件 · 本地处理 · 保持源文件不变"}
+                </span>
               </div>
               <button
                 className="primary-button import-button"
-                disabled={busy || !sourcePath.trim()}
+                disabled={busy || !selectedPath.trim()}
                 onClick={() => load()}
               >
                 {busy ? (
@@ -474,21 +569,39 @@ function App() {
                 <span className="live-dot" />{" "}
                 {busy
                   ? "PARSING"
-                  : summary
+                  : activeSummary
                     ? "SOURCE VERIFIED"
                     : "AWAITING SOURCE"}
               </span>
-              <span>NTFS MASTER FILE TABLE</span>
+              <span>
+                {artifact === "usn"
+                  ? "NTFS CHANGE JOURNAL"
+                  : "NTFS MASTER FILE TABLE"}
+              </span>
             </div>
           </section>
-          <section className={`operation-stage ${summary ? "ready" : ""}`}>
+          <section
+            className={`operation-stage ${activeSummary ? "ready" : ""}`}
+          >
             <div className="stage-index">
               <span>02 / EXPLORE</span>
               <span>
-                {summary ? "EVIDENCE IS READY." : "WAITING FOR YOUR SIGNAL."}
+                {activeSummary
+                  ? "EVIDENCE IS READY."
+                  : "WAITING FOR YOUR SIGNAL."}
               </span>
             </div>
-            {summary ? (
+            {artifact === "usn" ? (
+              <JournalHome
+                summary={journalSummary}
+                busy={busy}
+                openResults={() => {
+                  void invoke("open_journal_results").catch((e) =>
+                    setError(String(e)),
+                  );
+                }}
+              />
+            ) : summary ? (
               <div className="operation-content" key={summary.sha256}>
                 <div className="ready-indicator">
                   <Check size={13} />
@@ -589,7 +702,7 @@ function App() {
             )}
             <div className="stage-bottom">
               <span>RAW DATA. REAL EVIDENCE.</span>
-              <span>AURA / 01.01</span>
+              <span>AURA / 02.00</span>
             </div>
           </section>
         </main>
@@ -825,7 +938,7 @@ function App() {
             <span>
               <span className="live-dot" />
               {isTauri() ? "DESKTOP ENGINE READY" : "INTERFACE PREVIEW"}{" "}
-              <b>01.01</b>
+              <b>02.00</b>
             </span>
           </footer>
         </main>

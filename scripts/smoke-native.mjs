@@ -20,6 +20,7 @@ const call = (cmd, args = {}) =>
     { cmd, args },
   );
 try {
+  await main.getByRole("button", {name: "$MFT / 文件记录", exact: true}).click();
   await main
     .getByRole("textbox", { name: "证据路径" })
     .fill(path.resolve("example/$MFT"));
@@ -44,8 +45,6 @@ try {
   await page.waitForLoadState("domcontentloaded");
   page.on("pageerror", (e) => errors.push(e.message));
   await expect(page.getByRole("tab", { name: /全部记录/ })).toBeVisible();
-  const summary = await call("get_summary");
-  const caseId = summary.sha256;
   await main.screenshot({
     path: "artifacts/workspace-ready.png",
     fullPage: true,
@@ -54,6 +53,8 @@ try {
     timeout: 90000,
   });
   await expect(page.locator("tbody tr")).toHaveCount(80);
+  const summary = await call("get_summary");
+  const caseId = summary.sha256;
   await page.screenshot({
     path: "artifacts/desktop-loaded.png",
     fullPage: true,

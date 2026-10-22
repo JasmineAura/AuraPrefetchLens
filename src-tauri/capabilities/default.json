@@ -1,5 +1,5 @@
 {
   "identifier": "default",
-  "windows": ["main", "results"],
+  "windows": ["main", "results", "journal"],
   "permissions": ["core:default", "dialog:allow-open", "dialog:allow-save"]
 }

@@ -24,9 +24,10 @@ AURA / MFT LENS v$version
 Windows 10 / 11 x64 portable release
 
 1. Extract the ZIP and run Aura-MFT-Lens.exe.
-2. Browse to an extracted raw NTFS `$MFT file, then import and parse it.
+2. Choose MFT or USN Journal, browse to the exported raw file, then parse it.
 3. Analysis results open in a separate window.
-4. Resident content: select a record > Data streams > Extract.
+4. Resident content: select an MFT record > Data streams > Extract.
+5. USN Journal: filter events, inspect raw records, optionally link a same-volume MFT.
 
 Requires Microsoft Edge WebView2 Runtime:
 https://developer.microsoft.com/microsoft-edge/webview2/

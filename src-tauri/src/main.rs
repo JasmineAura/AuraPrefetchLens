@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod mft;
+mod usn;
 use mft::{Case, Detail, Entry, Summary};
 use serde::Serialize;
 use std::{
@@ -15,7 +16,135 @@ use tauri::{Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
 #[derive(Default)]
 struct AppState {
     case: RwLock<Option<Arc<Case>>>,
+    journal: RwLock<Option<Arc<usn::Session>>>,
     loading: AtomicBool,
+}
+struct LoadingReset<'a>(&'a AtomicBool);
+impl Drop for LoadingReset<'_> {
+    fn drop(&mut self) {
+        self.0.store(false, Ordering::SeqCst);
+    }
+}
+fn journal_session(
+    state: &AppState,
+    session_id: Option<&str>,
+) -> Result<Arc<usn::Session>, String> {
+    let session = state
+        .journal
+        .read()
+        .map_err(|_| "日志锁异常")?
+        .clone()
+        .ok_or("请先导入 $J 日志")?;
+    if let Some(id) = session_id {
+        if session.summary().session_id != id {
+            return Err("日志或 MFT 关联已更新，请重新选择记录".into());
+        }
+    }
+    Ok(session)
+}
+#[tauri::command]
+fn get_journal_summary(state: State<'_, AppState>) -> Result<usn::Summary, String> {
+    Ok(journal_session(&state, None)?.summary())
+}
+#[tauri::command]
+async fn import_journal(
+    path: String,
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+) -> Result<usn::Summary, String> {
+    if state.loading.swap(true, Ordering::SeqCst) {
+        return Err("已有导入任务正在运行".into());
+    }
+    let _reset = LoadingReset(&state.loading);
+    let progress_app = app.clone();
+    let journal = tauri::async_runtime::spawn_blocking(move || {
+        usn::Journal::load(std::path::Path::new(&path), |done, total| {
+            let _ = progress_app.emit("parse-progress", (done, total));
+        })
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+    let session = Arc::new(usn::Session {
+        journal: Arc::new(journal),
+        mft: None,
+    });
+    let summary = session.summary();
+    *state.journal.write().map_err(|_| "日志锁异常")? = Some(session);
+    let _ = app.emit("journal-changed", &summary);
+    Ok(summary)
+}
+#[tauri::command]
+async fn open_journal_results(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    journal_session(&state, None)?;
+    if let Some(window) = app.get_webview_window("journal") {
+        window.unminimize().map_err(|e| e.to_string())?;
+        window.show().map_err(|e| e.to_string())?;
+        window.set_focus().map_err(|e| e.to_string())?;
+    } else {
+        WebviewWindowBuilder::new(
+            &app,
+            "journal",
+            WebviewUrl::App("index.html?view=usn".into()),
+        )
+        .title("AURA / USN Journal 分析")
+        .inner_size(1500.0, 960.0)
+        .min_inner_size(1100.0, 740.0)
+        .center()
+        .build()
+        .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+#[tauri::command]
+async fn query_journal(
+    search: String,
+    filter: String,
+    page: usize,
+    session_id: String,
+    state: State<'_, AppState>,
+) -> Result<usn::Page, String> {
+    let session = journal_session(&state, Some(&session_id))?;
+    tauri::async_runtime::spawn_blocking(move || session.query(&search, &filter, page))
+        .await
+        .map_err(|e| e.to_string())
+}
+#[tauri::command]
+fn get_journal_detail(
+    id: usize,
+    session_id: String,
+    state: State<'_, AppState>,
+) -> Result<usn::Detail, String> {
+    journal_session(&state, Some(&session_id))?.detail(id)
+}
+#[tauri::command]
+fn set_journal_mft(
+    session_id: String,
+    mft_id: Option<String>,
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+) -> Result<usn::Summary, String> {
+    let mut lock = state.journal.write().map_err(|_| "日志锁异常")?;
+    let old = lock.as_ref().ok_or("请先导入 $J 日志")?;
+    if old.summary().session_id != session_id {
+        return Err("日志关联已更新，请重试".into());
+    }
+    let mft = if let Some(id) = mft_id {
+        Some(checked_case(&state, &id)?)
+    } else {
+        None
+    };
+    let session = Arc::new(usn::Session {
+        journal: old.journal.clone(),
+        mft,
+    });
+    let summary = session.summary();
+    *lock = Some(session);
+    drop(lock);
+    let _ = app.emit("journal-changed", &summary);
+    Ok(summary)
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -88,6 +217,7 @@ async fn import_mft(
     if state.loading.swap(true, Ordering::SeqCst) {
         return Err("已有导入任务正在运行".into());
     }
+    let _reset = LoadingReset(&state.loading);
     let path = PathBuf::from(path);
     let progress_app = app.clone();
     let result = tauri::async_runtime::spawn_blocking(move || {
@@ -96,7 +226,6 @@ async fn import_mft(
         })
     })
     .await;
-    state.loading.store(false, Ordering::SeqCst);
     let case = Arc::new(result.map_err(|e| e.to_string())??);
     let summary = case.summary.clone();
     *state.case.write().map_err(|_| "案例锁异常")? = Some(case);
@@ -188,6 +317,12 @@ fn main() {
         .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
             import_mft,
+            import_journal,
+            get_journal_summary,
+            open_journal_results,
+            query_journal,
+            get_journal_detail,
+            set_journal_mft,
             get_summary,
             open_results,
             query_records,
